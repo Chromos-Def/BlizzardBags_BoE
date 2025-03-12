@@ -61,6 +61,7 @@ local L = {
 	["BoE"] = "BoE", -- Bind on Equip
 	["BoU"] = "BoU", -- Bind on Use
 	["WrB"] = "WrB", -- Warbound
+	["WuE"] = "WuE"  -- Warbound until Equipped
 }
 
 -- Quality/Rarity colors for faster lookups
@@ -80,7 +81,8 @@ local colors = {
 local BindTypes = {
     Soulbound = "Soulbound",
     Warbound = "Warbound",
-    BoE = "BoE"
+    BoE = "BoE",
+    WuE = "WuE"
 }
 
 -- Callbacks
@@ -94,6 +96,30 @@ local accountBoundTexts = {
 
 local function IsItemWarbound(itemLink, bag, slot, tooltipData)
     -- Returns whether the item is warbound or not.
+    if not tooltipData then
+        if bag and slot then
+            tooltipData = C_TooltipInfo.GetBagItem(bag, slot)
+        else
+            tooltipData = C_TooltipInfo.GetHyperlink(itemLink)
+        end
+    end
+    if tooltipData and tooltipData.lines then
+        for i, line in pairs(tooltipData.lines) do
+            for _, accountBoundText in pairs(accountBoundTexts) do
+                if line.leftText == accountBoundText then
+                    return true
+                end
+                if line.rightText == accountBoundText then
+                    return true
+                end
+            end
+        end
+    end
+    return false
+end
+
+local function IsItemWarboundUntilEquipped(itemLink, bag, slot, tooltipData)
+    -- Returns whether the item is warbound until equipped or not.
     if not tooltipData then
         if bag and slot then
             tooltipData = C_TooltipInfo.GetBagItem(bag, slot)
@@ -141,6 +167,12 @@ local function CalculateType(itemLink, bag, slot, tooltipData)
     if warbound == nil then return nil end
     if warbound then
         return BindTypes.Warbound
+    end
+	
+	local warbounduntilequipped = IsItemWarboundUntilEquipped(itemLink, bag, slot, tooltipData)
+    if warbounduntilequipped == nil then return nil end
+    if warbounduntilequipped then
+        return BindTypes.WuE
     end
 
     local soulbound = IsItemSoulbound(itemLink, bag, slot, tooltipData)
@@ -202,7 +234,7 @@ local Update = function(self, bag, slot)
 			end
 
 			if (showStatus) then
-				message = (bindType == 3) and L["BoU"] or (bindType == 2) and L["BoE"] or (tooltip_bind_type == BindTypes.Warbound) and L["WrB"] 
+				message = (bindType == 3) and L["BoU"] or (tooltip_bind_type == BindTypes.Warbound) and L["WrB"] or (tooltip_bind_type == BindTypes.WuE) and L["WuE"] or (bindType == 2) and L["BoE"]
 				rarity = itemQuality
 				mult = (itemRarity ~= 3 and itemRarity ~= 4) and 4/5
 			end
