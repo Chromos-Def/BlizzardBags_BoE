@@ -60,37 +60,41 @@ GP_ItemButtonInfoFrameCache = Cache
 local L = {
 	["BoE"] = "BoE", -- Bind on Equip
 	["BoU"] = "BoU", -- Bind on Use
-	["WrB"] = "WrB", -- Warbound
-	["WuE"] = "WuE"  -- Warbound until Equipped
+	["WB"] = "WB", -- Warbound
+	["WE"] = "WE"  -- Warbound until Equipped
 }
 
 -- Quality/Rarity colors for faster lookups
--- Modified colors done by Chromos                    -- original values/255
+-- Modified colors done by Chromos                    -- original values/255     -- my label colors
+-- Not yet! -- Unifying label colors for Poor, Common, Uncommon, Rare, Epic
 local colors = {
-	[0] = { 229/255, 229/255, 229/255 }, -- Poor      -- 157/157/157
-	[1] = { 240/255, 240/255, 240/255 }, -- Common    -- 240/240/240
-	[2] = { 153/255, 255/255, 153/255 }, -- Uncommon  -- 30/178/0
-	[3] = { 153/255, 204/255, 255/255 }, -- Rare      -- 0/112/221
-	[4] = { 229/255, 204/255, 255/255 }, -- Epic      -- 163/53/238
-	[5] = { 255/255, 204/255, 153/255 }, -- Legendary -- 255/96/0
-	[6] = { 229/255, 204/255, 127/255 }, -- Artifact  -- 229/204/127
-	[7] = { 79/255, 196/255, 225/255 },  -- Heirloom  -- 79/196/255
-	[8] = { 79/255, 196/255, 225/255 }   -- Blizzard  -- 79/196/255
+	[0] = { 229/255, 229/255, 229/255 }, -- Poor      -- 157/157/157             -- 229/229/229
+	[1] = { 240/255, 240/255, 240/255 }, -- Common    -- 240/240/240             -- 240/240/240
+	[2] = { 153/255, 255/255, 153/255 }, -- Uncommon  -- 30/178/0                -- 153/255/153
+	[3] = { 153/255, 204/255, 255/255 }, -- Rare      -- 0/112/221               -- 153/204/255
+	[4] = { 229/255, 204/255, 255/255 }, -- Epic      -- 163/53/238              -- 229/204/255
+	[5] = { 255/255, 204/255, 153/255 }, -- Legendary -- 255/96/0                -- 255/204/153
+	[6] = { 229/255, 204/255, 127/255 }, -- Artifact  -- 229/204/127             -- 229/204/127
+	[7] = { 79/255, 196/255, 225/255 },  -- Heirloom  -- 79/196/255              -- 79/196/255
+	[8] = { 79/255, 196/255, 225/255 }   -- Blizzard  -- 79/196/255              -- 79/196/255
 }
 
 local BindTypes = {
     Soulbound = "Soulbound",
     Warbound = "Warbound",
-    BoE = "BoE",
-    WuE = "WuE"
+    BindOnEquip = "BindOnEquip",
+    WarboundUntilEquipped = "WarboundUntilEquipped"
 }
 
 -- Callbacks
 -----------------------------------------------------------
 local accountBoundTexts = {
     ITEM_ACCOUNTBOUND,
-    ITEM_ACCOUNTBOUND_UNTIL_EQUIP,
     ITEM_BIND_TO_ACCOUNT,
+}
+
+local accountBoundUntilEquippedTexts = {
+    ITEM_ACCOUNTBOUND_UNTIL_EQUIP,
     ITEM_BIND_TO_ACCOUNT_UNTIL_EQUIP,
 }
 
@@ -129,11 +133,11 @@ local function IsItemWarboundUntilEquipped(itemLink, bag, slot, tooltipData)
     end
     if tooltipData and tooltipData.lines then
         for i, line in pairs(tooltipData.lines) do
-            for _, accountBoundText in pairs(accountBoundTexts) do
-                if line.leftText == accountBoundText then
+            for _, accountBoundUntilEquippedText in pairs(accountBoundUntilEquippedTexts) do
+                if line.leftText == accountBoundUntilEquippedText then
                     return true
                 end
-                if line.rightText == accountBoundText then
+                if line.rightText == accountBoundUntilEquippedText then
                     return true
                 end
             end
@@ -172,7 +176,7 @@ local function CalculateType(itemLink, bag, slot, tooltipData)
 	local warbounduntilequipped = IsItemWarboundUntilEquipped(itemLink, bag, slot, tooltipData)
     if warbounduntilequipped == nil then return nil end
     if warbounduntilequipped then
-        return BindTypes.WuE
+        return BindTypes.WarboundUntilEquipped
     end
 
     local soulbound = IsItemSoulbound(itemLink, bag, slot, tooltipData)
@@ -181,7 +185,7 @@ local function CalculateType(itemLink, bag, slot, tooltipData)
         return BindTypes.Soulbound
     end
 
-    return BindTypes.BoE
+    return BindTypes.BindOnEquip
 end
 
 -- Update an itembutton's bind status
@@ -234,7 +238,7 @@ local Update = function(self, bag, slot)
 			end
 
 			if (showStatus) then
-				message = (bindType == 3) and L["BoU"] or (tooltip_bind_type == BindTypes.Warbound) and L["WrB"] or (tooltip_bind_type == BindTypes.WuE) and L["WuE"] or (bindType == 2) and L["BoE"]
+				message = (bindType == 3) and L["BoU"] or (tooltip_bind_type == BindTypes.Warbound) and L["WB"] or (tooltip_bind_type == BindTypes.WarboundUntilEquipped) and L["WE"] or (bindType == 2) and L["BoE"]
 				rarity = itemQuality
 				mult = (itemRarity ~= 3 and itemRarity ~= 4) and 4/5
 			end
